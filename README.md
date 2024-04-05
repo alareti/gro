@@ -3,4 +3,6 @@
 Green reducer-objects-as-thread's
 
 The aim is to define a concurrency model expressive enough to allow synchronous
-code define highly concurrent applications.
+code define highly concurrent applications. Using only primitives from Rust's
+std library, this library essentially relies upon OS runtime support to
+enable asynchronous operations in a synchronous manner.
