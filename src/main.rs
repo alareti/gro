@@ -119,6 +119,12 @@ impl Gro {
     }
 }
 
+trait Reducer {
+    type State;
+
+    fn reducer(&self, state: &mut Self::State);
+}
+
 fn main() {
     let dut_gro = Gro::new(String::from("dut"), String::from("abc"));
     let tb_gro = Gro::new(String::from("tb"), String::from("def"));
@@ -132,123 +138,3 @@ fn main() {
     dut_handle.join().unwrap();
     tb_handle.join().unwrap();
 }
-
-// fn main() {
-//     let groat_builder_a = Builder::new(StateA(String::from(""))).name(String::from("GroatA"));
-//     let groat_builder_b = Builder::new(StateB(String::from(""))).name(String::from("GroatB"));
-//
-//     let groat_a = groat_builder_a.spawn();
-//     let groat_b = groat_builder_b.spawn();
-//
-//     let _ = groat_a.join();
-//     let _ = groat_b.join();
-// }
-
-// struct Groat<S> {
-//     handle: thread::JoinHandle<()>,
-//     tx: Box<dyn FnOnce() -> S>,
-// }
-//
-// // Connecting one groat to another should be
-// // as simple as something like
-// // groat_a.on_tx(|&state_a| groat_b.drive(&state_a))
-// // Because of that, Groat needs to know the various
-// // reducer trait objects it will need to support.
-// // Or at least the builder should know.
-// impl<S> Groat<S> {
-//     // reset essentially puts the groat in a
-//     // known good state (initial_state) and
-//     // causes it to transmit its state,
-//     // essentially starting the actual state
-//     // reducing processes once everything has
-//     // been hooked up properly
-//     fn reset(self) {}
-//
-//     fn drive(self, _input: Box<dyn Reducer<State = S>>) {}
-//
-//     // Fn should have Groat state type as input
-//     // on_tx will call proc after every state
-//     // update
-//     fn on_tx(self, _proc: Box<dyn Fn()>) {}
-//
-//     fn join(self) -> thread::Result<()> {
-//         self.handle.join()
-//     }
-// }
-//
-// struct Builder<S> {
-//     initial_state: S,
-//     name: Option<String>,
-// }
-//
-// impl<S> Builder<S>
-// where
-//     S: Send + 'static + std::fmt::Debug,
-// {
-//     fn new(initial_state: S) -> Self {
-//         Builder {
-//             initial_state,
-//             name: None,
-//         }
-//     }
-//
-//     fn name(self, name: String) -> Self {
-//         Builder {
-//             initial_state: self.initial_state,
-//             name: Some(name),
-//         }
-//     }
-//
-//     fn spawn(self) -> Groat<S> {
-//         let thread_builder = thread::Builder::new();
-//
-//         let thread_builder = match self.name {
-//             Some(name) => thread_builder.name(name),
-//             None => thread_builder,
-//         };
-//
-//         let handle = thread_builder
-//             .spawn(move || {
-//                 let groat_name = match thread::current().name() {
-//                     Some(name) => String::from(name),
-//                     None => format!("{:?}", thread::current().id()),
-//                 };
-//                 println!("Spawned new groat named {groat_name}");
-//
-//                 // let state = self.initial_state;
-//                 // println!("{groat_name}\tInitial state: {state:#?}");
-//             })
-//             .unwrap();
-//
-//         Groat {
-//             handle,
-//             tx: Box::new(|| self.initial_state),
-//         }
-//     }
-// }
-//
-// trait Reducer {
-//     type State;
-//
-//     fn reducer(&self, state: &mut Self::State);
-// }
-//
-// #[derive(Debug)]
-// struct StateA(String);
-// impl Reducer for StateB {
-//     type State = StateA;
-//
-//     fn reducer(&self, state: &mut Self::State) {
-//         state.0.push_str(&self.0.to_string());
-//     }
-// }
-//
-// #[derive(Debug)]
-// struct StateB(String);
-// impl Reducer for StateA {
-//     type State = StateB;
-//
-//     fn reducer(&self, state: &mut Self::State) {
-//         state.0.push_str(&self.0.to_string());
-//     }
-// }
