@@ -106,15 +106,15 @@ impl Gro {
         })
     }
 
-    fn reset(&self) {
+    fn run(&self) {
         let (is_ready, _cvar) = &*self.ready;
         let name = self.name.clone();
 
-        println!("{name}: reset() getting is_ready lock");
+        println!("{name}: run() getting is_ready lock");
         let mut is_ready = is_ready.lock().unwrap();
-        println!("{name}: reset() got is_ready lock");
+        println!("{name}: run() got is_ready lock");
 
-        println!("{name}: reset() setting is_ready to true");
+        println!("{name}: run() setting is_ready to true");
         *is_ready = true;
     }
 }
@@ -126,8 +126,8 @@ fn main() {
     let tb_handle = tb_gro.spawn(Arc::clone(&dut_gro.outputter));
     let dut_handle = dut_gro.spawn(Arc::clone(&tb_gro.outputter));
 
-    tb_gro.reset();
-    // dut_gro.reset();
+    tb_gro.run();
+    // dut_gro.run();
 
     dut_handle.join().unwrap();
     tb_handle.join().unwrap();
