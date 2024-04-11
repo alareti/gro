@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "groat"
+name = "gro"
 version = "0.1.0"
