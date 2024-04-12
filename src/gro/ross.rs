@@ -1,35 +1,31 @@
-use std::sync::Arc;
+type Receiver<T> = Box<dyn Fn(T)>;
 
-type Callback<T> = Arc<dyn Fn(T)>;
-
-pub struct Sender<T> {
-    on_recv: Callback<T>,
+pub struct Driver<T> {
+    on_recv: Option<Receiver<T>>,
 }
 
-impl<T> Sender<T> {
-    pub fn new(on_recv: Callback<T>) -> Self {
+impl<T> Driver<T> {
+    pub fn new(on_recv: Option<Receiver<T>>) -> Self {
         Self { on_recv }
     }
 
-    pub fn send(self, input: T) -> Self {
-        (self.on_recv.as_ref())(input);
-
-        Self::new(self.on_recv)
-    }
-}
-
-pub struct Receiver<T> {
-    on_send: Callback<T>,
-}
-
-impl<T> Receiver<T> {
-    pub fn new(on_send: Callback<T>) -> Self {
-        Self { on_send }
+    pub fn drive(self, input: T) -> Result<(), T> {
+        match self.on_recv.as_ref() {
+            Some(rx) => {
+                rx(input);
+                Ok(())
+            }
+            None => Err(input),
+        }
     }
 
-    pub fn recv(self, input: T) -> Self {
-        (self.on_send.as_ref())(input);
-
-        Self::new(self.on_send)
+    pub fn set_rx(&mut self, on_recv: Receiver<T>) -> Result<(), Receiver<T>> {
+        match self.on_recv {
+            Some(_) => Err(on_recv),
+            None => {
+                self.on_recv = Some(on_recv);
+                Ok(())
+            }
+        }
     }
 }

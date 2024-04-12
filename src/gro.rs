@@ -1,8 +1,11 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, RwLock,
-};
 use std::thread;
+use std::{
+    marker::PhantomData,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, RwLock,
+    },
+};
 
 mod ross;
 
@@ -41,13 +44,12 @@ type Updater<S> = Arc<dyn Fn(Input<S>)>;
 type Callback<S> = Arc<dyn Fn(&S)>;
 type Outputter<S> = Arc<dyn Fn(Callback<S>)>;
 
-pub struct Gro<'a, S> {
+pub struct Gro<S> {
     handle: Arc<thread::JoinHandle<()>>,
-    sender: ross::Sender<Input<'a, S>>,
-    receiver: ross::Receiver<Callback<S>>,
+    phantom: PhantomData<S>,
 }
 
-impl<'a, S> Gro<'a, S>
+impl<S> Gro<S>
 where
     S: 'static,
 {
@@ -56,6 +58,25 @@ where
 
         // Interpret as 'ready to transmit'
         let ready = Arc::new(AtomicBool::new(false));
+
+        let c_state = Arc::clone(&state);
+        let c_ready = Arc::clone(&ready);
+
+        // Assuming that outputter is running in a thread other than
+        // gro's own thread (i.e. wrapped in Receiver)
+        let outputter: Outputter<S> = Arc::new(move |callback| {
+            while !c_ready.load(Ordering::Relaxed) {
+                thread::park();
+            }
+
+            // Perform state update
+            // input.reduce(&mut c_state.write().unwrap());
+            callback(&c_state.read().unwrap());
+
+            // Indicate to udpater that state update
+            // is complete
+            c_ready.store(false, Ordering::Relaxed);
+        });
 
         let handle = Arc::new(thread::spawn(move || {}));
 
@@ -84,34 +105,11 @@ where
             c_handle.thread().unpark();
         });
 
-        let c_state = Arc::clone(&state);
-        let c_ready = Arc::clone(&ready);
-        let c_handle = Arc::clone(&handle);
-
-        // Assuming that outputter is running in a thread other than
-        // gro's own thread (i.e. wrapped in Receiver)
-        let outputter: Outputter<S> = Arc::new(move |callback| {
-            while !c_ready.load(Ordering::Relaxed) {
-                thread::park();
-            }
-
-            // Perform state update
-            // input.reduce(&mut c_state.write().unwrap());
-            callback(&c_state.read().unwrap());
-
-            // Indicate to udpater that state update
-            // is complete
-            c_ready.store(false, Ordering::Relaxed);
-            c_handle.thread().unpark();
-        });
-
-        let sender = ross::Sender::new(updater);
-        let receiver = ross::Receiver::new(outputter);
+        // let sender = ross::Sender::new(updater);
 
         Gro {
             handle,
-            sender,
-            receiver,
+            phantom: PhantomData,
         }
     }
 }
