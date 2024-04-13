@@ -8,7 +8,7 @@ use std::{
 };
 
 mod reg;
-mod ross;
+mod sync;
 
 trait Reducer<S> {
     fn reduce(&self, state: &mut S);

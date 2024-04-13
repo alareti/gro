@@ -1,19 +1,18 @@
-type Receiver<'a, T> = Box<dyn Fn(&'a T) + 'a>;
-
-pub struct Driver<'a, T> {
-    on_recv: Option<Receiver<'a, T>>,
+type Receiver<T> = Box<dyn Fn(T)>;
+pub struct Driver<T> {
+    on_recv: Option<Receiver<T>>,
 }
 
-impl<'a, T> Driver<'a, T> {
+impl<T> Driver<T> {
     pub fn new() -> Self {
         Self { on_recv: None }
     }
 
-    pub fn set_rx(&mut self, on_recv: Receiver<'a, T>) {
+    pub fn set_rx(&mut self, on_recv: Receiver<T>) {
         self.on_recv = Some(on_recv);
     }
 
-    pub fn drive(mut self, input: &'a T) -> Result<Self, ()> {
+    pub fn drive(mut self, input: T) -> Result<Self, ()> {
         if let Some(ref on_recv) = self.on_recv {
             on_recv(input);
 
@@ -49,6 +48,6 @@ mod tests {
     #[should_panic]
     fn no_rx() {
         let driver = Driver::<usize>::new();
-        let _ = driver.drive(&0xDEADBEEF).unwrap();
+        let _ = driver.drive(0xDEADBEEF).unwrap();
     }
 }
