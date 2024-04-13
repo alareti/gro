@@ -7,32 +7,11 @@ use std::{
     },
 };
 
+mod reg;
 mod ross;
 
 trait Reducer<S> {
     fn reduce(&self, state: &mut S);
-}
-
-trait Deducer<I> {
-    fn deduce(&mut self, input: &I);
-}
-
-impl<I, S> Reducer<S> for I
-where
-    S: Deducer<I>,
-{
-    fn reduce(&self, state: &mut S) {
-        state.deduce(self);
-    }
-}
-
-impl<S, I> Deducer<I> for S
-where
-    I: Reducer<S>,
-{
-    fn deduce(&mut self, input: &I) {
-        input.reduce(self);
-    }
 }
 
 // Input is some type which can reduce self's state
