@@ -1,3 +1,6 @@
+mod comms;
+mod reg;
+
 use std::thread;
 use std::{
     marker::PhantomData,
@@ -6,9 +9,6 @@ use std::{
         Arc, RwLock,
     },
 };
-
-mod reg;
-mod sync;
 
 trait Reducer<S> {
     fn reduce(&self, state: &mut S);
