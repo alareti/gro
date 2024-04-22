@@ -1,5 +1,4 @@
-mod comms;
-mod reg;
+mod graph;
 
 use std::thread;
 use std::{

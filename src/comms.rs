@@ -22,7 +22,7 @@ pub trait Receiver<I> {
     fn take_driver(&mut self) -> Result<Port<I>, ()>;
 }
 
-pub fn connect<T>(mut driver: impl Driver<T>, mut receiver: impl Receiver<T>) {
+pub fn connect<T>(driver: &mut impl Driver<T>, receiver: &mut impl Receiver<T>) {
     if driver.set_driver(receiver.take_driver().unwrap()).is_err() {
         panic!("Couldn't set driver");
     }
